@@ -8,14 +8,18 @@ import DialogContent from '@mui/material/DialogContent';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DialogTitle from '@mui/material/DialogTitle';
 import Box from '@mui/material/Box';
-import { TextField, Typography } from '@mui/material';
-import { Barcode, BarcodeMetadata } from '../common/constants';
+import LoadingButton from '@mui/lab/LoadingButton';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
 import BarcodeTemplate1 from './barcodeTemplates/BarcodeTemplate1';
+import { Barcode, BarcodeMetadata, LogConstants } from '../common/constants';
 
-export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrintBarcodeDialog, barcodeMetadata, setBarcodeMetadata }: any) {
+
+export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrintBarcodeDialog, barcodeMetadata, setBarcodeMetadata, setAlert }: any) {
 
   const [settingsTab, setSettingsTab] = React.useState<boolean>(true)
   const [barcodes, setBarcodes] = React.useState<Barcode[]>([])
+  const [printLoading, setPrintLoading] = React.useState<boolean>(false)
 
   React.useEffect(() => {
     const newBarcodes = [].concat(...barcodeMetadata.map((item: BarcodeMetadata) => {
@@ -24,8 +28,8 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
         temp.push({
           itemName: item.itemName,
           value: item.value,
-          rate: "10",
-          mrp: "25"
+          rate: item.rate,
+          mrp: item.mrp
         })
       }
       return temp
@@ -34,21 +38,39 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
   }, [barcodeMetadata])
 
   const createPDF = async () => {
-    const pdf = new jsPDF('l', 'mm', [104, 25]);
-    for (let i = 0; i < barcodes.length; i += 2) {
-      const barcode: any = document.querySelector("#barcode-" + i)
-
-      const data = await html2canvas(barcode);
-      const img = data.toDataURL("image/png");
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      pdf.addImage(img, "PNG", 0, 0, pdfWidth, pdfHeight);
-      if (i + 2 < barcodes.length)
-        pdf.addPage()
+    if(barcodes.length > 50) {
+      setAlert({
+        severity: "warning",
+        message: "You cannot print more than 50 barcodes at once!"
+      });
+      return
     }
-    pdf.save("barcodes.pdf");
+    setPrintLoading(true)
+    try {
+      const pdf = new jsPDF('l', 'mm', [104, 25]);
+      for (let i = 0; i < barcodes.length; i += 2) {
+        const barcode: any = document.querySelector("#barcode-" + i)
+
+        const data = await html2canvas(barcode);
+        const img = data.toDataURL("image/png");
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        pdf.addImage(img, "PNG", 0, 0, pdfWidth, pdfHeight);
+        if (i + 2 < barcodes.length)
+          pdf.addPage()
+      }
+      pdf.autoPrint(); // Automatically open print dialog
+      window.open(pdf.output('bloburl'), '_blank');
+    } catch (error) {
+      setAlert({
+        severity: "error",
+        message: LogConstants.PRINT_BATCODES_ERROR
+      });
+    } finally {
+      setPrintLoading(false)
+    }
   };
 
   const descriptionElementRef = React.useRef<HTMLElement>(null);
@@ -112,7 +134,7 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
             </Box>
           </DialogContent>
         ) : (
-          <DialogContent dividers>
+          <DialogContent dividers sx={{ margin: "0 auto" }}>
             {
               barcodes.map((item: any, index: number) => {
                 if (index % 2 === 0) {
@@ -145,7 +167,7 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
         ) : (
           <DialogActions>
             <Button onClick={() => setSettingsTab(true)}>Back</Button>
-            <Button variant='contained' onClick={createPDF}>Print</Button>
+            <LoadingButton variant='contained' onClick={createPDF} loading={printLoading}>Print</LoadingButton>
           </DialogActions>
         )
       }

@@ -46,47 +46,58 @@ const StyledMenu = styled((props: MenuProps) => (
   },
 }));
 
-const BulkActionsButton = ({selection, setOpenPrintBarcodeDialog}: any) => {
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl);
-  
-    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-      setAnchorEl(event.currentTarget);
-    };
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
-  
-    return (
-      <div>
-        <Button
-          id="demo-customized-button"
-          aria-controls={open ? 'demo-customized-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-          variant="outlined"
-          disableElevation
-          onClick={handleClick}
-          endIcon={<KeyboardArrowDownIcon />}
-          disabled={!selection.length && true}
-        >
-          Bulk Actions
-        </Button>
-        <StyledMenu
-          id="demo-customized-menu"
-          MenuListProps={{
-            'aria-labelledby': 'demo-customized-button',
-          }}
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-        >
-          <MenuItem onClick={() => setOpenPrintBarcodeDialog(true)} disableRipple>
-            Print Barcode
-          </MenuItem>
-        </StyledMenu>
-      </div>
-    );
+const BulkActionsButton = ({ selection, setOpenPrintBarcodeDialog, setAlert }: any) => {
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const validateSelectionLimit = () => {
+    if (selection.length <= 25)
+      setOpenPrintBarcodeDialog(true)
+    else
+      setAlert({
+        severity: "info",
+        message: "Maximum of 25 selections allowed at a time!"
+      });
+  }
+
+  return (
+    <div>
+      <Button
+        id="demo-customized-button"
+        aria-controls={open ? 'demo-customized-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? 'true' : undefined}
+        variant="outlined"
+        disableElevation
+        onClick={handleClick}
+        endIcon={<KeyboardArrowDownIcon />}
+        disabled={!selection.length && true}
+        sx={{ height: "2.5rem" }}
+      >
+        Bulk Actions
+      </Button>
+      <StyledMenu
+        id="demo-customized-menu"
+        MenuListProps={{
+          'aria-labelledby': 'demo-customized-button',
+        }}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={validateSelectionLimit} disableRipple>
+          Print Barcode
+        </MenuItem>
+      </StyledMenu>
+    </div>
+  );
 }
 
 export default BulkActionsButton

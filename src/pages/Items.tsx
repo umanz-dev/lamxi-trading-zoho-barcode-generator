@@ -1,47 +1,68 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import Box from '@mui/material/Box'
 import ItemsDataGrid from '../components/ItemsDataGrid'
 import BulkActionsButton from '../components/BulkActionsButton'
 import PrintBarcodeDialog from '../components/PrintBarcodeDialog'
-import { GridRowSelectionModel } from '@mui/x-data-grid';
-import { BarcodeMetadata } from '../common/constants'
+import { GridPaginationModel, GridRowSelectionModel } from '@mui/x-data-grid';
+import { BarcodeMetadata, LogConstants } from '../common/constants'
+import { fetchItems } from '../api/api'
 
-const data: any = [
-    { id: 1, SKU: '17167', lastName: 'Snow', firstName: 'Jon', age: 14 },
-    { id: 2, SKU: '17167',  lastName: 'Lannister', firstName: 'Cersei', age: 31 },
-    { id: 3, SKU: '17167',  lastName: 'Lannister', firstName: 'Jaime', age: 31 },
-    { id: 4, SKU: '17167',  lastName: 'Stark', firstName: 'Arya', age: 11 },
-    { id: 5, SKU: '17167',  lastName: 'Targaryen', firstName: 'Daenerys', age: null },
-    { id: 6, SKU: '17167',  lastName: 'Melisandre', firstName: null, age: 150 },
-    { id: 7, SKU: '17167',  lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
-    { id: 8, SKU: '17167',  lastName: 'Frances', firstName: 'Rossini', age: 36 },
-    { id: 9, SKU: '17167',  lastName: 'Roxie', firstName: 'Harvey', age: 65 },
-];
 
-const Items = () => {
+const Items = ({ setAlert, searchText }: any) => {
     const [selection, setSelection] = React.useState<GridRowSelectionModel>([]);
     const [openPrintBarcodeDialog, setOpenPrintBarcodeDialog] = React.useState<boolean>(false)
     const [barcodeMetadata, setBarcodeMetadata] = React.useState<BarcodeMetadata[]>([])
+    const [items, setItems] = React.useState([])
+    const [loadingItems, setLoadingItems] = React.useState<boolean>(false)
+    const [hasNextPage, setHasNextPage] = React.useState<boolean>(false)
+    const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>({
+        pageSize: 25,
+        page: 0,
+    });
 
-    useEffect(() => {
-        const newBarcodeMetadata = selection.map((selectedId: any) => data.find((item: any) => item.id === selectedId))
-            .map(({ id, firstName, SKU, lastName }: any) => {
+    React.useEffect(() => {
+        populateItems()
+    }, [paginationModel, searchText])
+
+
+    React.useEffect(() => {
+        const newBarcodeMetadata = selection.map((selectedId: any) => items.find((item: any) => item.item_id === selectedId))
+            .map(({ item_id, name, sku, rate, cf_mrp }: any) => {
                 return {
-                    id: id,
+                    id: item_id,
                     associatedField: "SKU",
-                    value: SKU,
-                    itemName: lastName,
-                    quantity: 1
+                    value: sku,
+                    itemName: name,
+                    quantity: 1,
+                    rate: rate,
+                    mrp: cf_mrp ? Number(cf_mrp) : undefined
                 }
             })
         setBarcodeMetadata(newBarcodeMetadata)
-    }, [selection])
+    }, [selection, items])
+
+    const populateItems = async () => {
+        try {
+            setSelection([])
+            setLoadingItems(true)
+            const response = await fetchItems(paginationModel, searchText)
+            setItems(response.data.items)
+            setHasNextPage(response.data.page_context.has_more_page)
+        } catch (err: any) {
+            setAlert({
+                severity: "error",
+                message: LogConstants.FETCH_ITEMS_ERROR
+            })
+        } finally {
+            setLoadingItems(false)
+        }
+    }
 
     return (
         <Box sx={{ display: "flex", gap: "1rem", flexDirection: "column" }}>
-            <BulkActionsButton selection={selection} setOpenPrintBarcodeDialog={setOpenPrintBarcodeDialog} />
-            <ItemsDataGrid selection={selection} setSelection={setSelection} data={data} />
-            <PrintBarcodeDialog openPrintBarcodeDialog={openPrintBarcodeDialog} setOpenPrintBarcodeDialog={setOpenPrintBarcodeDialog} barcodeMetadata={barcodeMetadata} setBarcodeMetadata={setBarcodeMetadata} />
+            <BulkActionsButton selection={selection} setOpenPrintBarcodeDialog={setOpenPrintBarcodeDialog} setAlert={setAlert} />
+            <ItemsDataGrid selection={selection} setSelection={setSelection} items={items} paginationModel={paginationModel} setPaginationModel={setPaginationModel} hasNextPage={hasNextPage} loadingItems={loadingItems} />
+            <PrintBarcodeDialog openPrintBarcodeDialog={openPrintBarcodeDialog} setOpenPrintBarcodeDialog={setOpenPrintBarcodeDialog} barcodeMetadata={barcodeMetadata} setBarcodeMetadata={setBarcodeMetadata} setAlert={setAlert} />
         </Box>
     )
 }
