@@ -1,46 +1,90 @@
-# Getting Started with Create React App
+# Zoho Barcode Generator
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based web application for generating and printing barcodes with Zoho integration.
 
-## Available Scripts
+## 🚀 Live Demo
 
-In the project directory, you can run:
+**[View Live App](https://umanz-dev.github.io/lamxi-trading-zoho-barcode-generator)**
 
-### `npm start`
+## ✨ Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- Generate barcodes for inventory items
+- Print barcodes in bulk
+- Zoho Books integration
+- Modern Material-UI interface
+- Responsive design
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 🛠️ Setup & Installation
 
-### `npm test`
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+- Zoho Books account with API access
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 1. Clone the Repository
+```bash
+git clone https://github.com/umanz-dev/lamxi-trading-zoho-barcode-generator.git
+cd lamxi-trading-zoho-barcode-generator
+```
 
-### `npm run build`
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 3. Configure Environment Variables
+Create a `.env` file in the root directory:
+```env
+REACT_APP_CLIENT_ID=your_zoho_client_id
+REACT_APP_ORGANIZATION_ID=your_zoho_organization_id
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 4. Start Development Server
+```bash
+npm start
+```
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 📦 Available Scripts
 
-### `npm run eject`
+- `npm start` - Start development server
+- `npm run build` - Build for production
+- `npm test` - Run tests
+- `npm run deploy` - Deploy to GitHub Pages
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 🚀 Deployment
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Deploy to GitHub Pages
+```bash
+npm run deploy
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Manual Deployment
+1. Build the project: `npm run build`
+2. Deploy the `build` folder to your hosting service
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🔧 Configuration
 
-## Learn More
+### Zoho Books Setup
+1. Go to Zoho Books → Settings → Developer Space
+2. Create a new app and get your Client ID
+3. Note your Organization ID from the URL
+4. Add these to your `.env` file
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Environment Variables
+- `REACT_APP_CLIENT_ID` - Your Zoho Books Client ID
+- `REACT_APP_ORGANIZATION_ID` - Your Zoho Books Organization ID
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 📱 Usage
+
+1. **Login** - Authenticate with your Zoho account
+2. **Import Items** - Fetch items from Zoho Books
+3. **Generate Barcodes** - Create barcodes for selected items
+4. **Print** - Print barcodes individually or in bulk
+
+## 🛡️ Security
+
+- Environment variables are stored locally in `.env`
+- `.env` file is gitignored for security
+- Never commit sensitive credentials
+
