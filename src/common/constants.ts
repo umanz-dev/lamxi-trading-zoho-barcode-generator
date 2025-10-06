@@ -31,7 +31,7 @@ export interface Barcode {
 export const APIConstants = {
     TOKEN: 'https://accounts.zoho.in/oauth/v2/token',
     BOOKS: 'https://www.zohoapis.in/books/v3',
-    REDIRECT_URI: 'http://localhost:3000/zoho-barcode-generator/',
+    REDIRECT_URI: 'https://umanz-dev.github.io/lamxi-trading-zoho-barcode-generator/',
     // REDIRECT_URI: 'http://localhost:3000',
     AUTH: 'https://accounts.zoho.in/oauth/v2/auth',
     REFRESH: 'https://accounts.zoho.in/oauth/v2/auth/refresh'
