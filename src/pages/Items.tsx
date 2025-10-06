@@ -35,7 +35,8 @@ const Items = ({ setAlert, searchText }: any) => {
                     itemName: name,
                     quantity: 1,
                     rate: rate,
-                    mrp: cf_mrp ? Number(cf_mrp) : undefined
+                    mrp: cf_mrp ? Number(cf_mrp) : undefined,
+                    sku: sku
                 }
             })
         setBarcodeMetadata(newBarcodeMetadata)

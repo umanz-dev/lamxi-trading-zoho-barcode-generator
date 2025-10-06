@@ -13,6 +13,7 @@ export interface BarcodeMetadata {
     quantity: number
     rate: number
     mrp?: number
+    sku?: string
 }
 
 export interface Barcode {
@@ -20,20 +21,25 @@ export interface Barcode {
     value: string
     rate: number
     mrp?: number
+    sizeLabel?: string
+    sizeCode?: string
+    age?: string
+    uniqueCode?: string,
+    sku?: string
 }
 
 export const APIConstants = {
     TOKEN: 'https://accounts.zoho.in/oauth/v2/token',
     BOOKS: 'https://www.zohoapis.in/books/v3',
-    REDIRECT_URI: 'https://atharvakokatee.github.io/zoho-barcode-generator',
+    REDIRECT_URI: 'http://localhost:3000/zoho-barcode-generator/',
     // REDIRECT_URI: 'http://localhost:3000',
     AUTH: 'https://accounts.zoho.in/oauth/v2/auth',
     REFRESH: 'https://accounts.zoho.in/oauth/v2/auth/refresh'
 }
 
 export const envConstants = {
-    CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
-    ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID
+    CLIENT_ID: "1000.UQSZXUJKK4QOV266OYPAMSZFV9RCAG",
+    ORGANIZATION_ID: "60017205211"
 }
 
 export const LogConstants = {

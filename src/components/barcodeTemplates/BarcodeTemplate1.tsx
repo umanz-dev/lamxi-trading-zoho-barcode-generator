@@ -3,53 +3,315 @@ import JsBarcode from 'jsbarcode';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
 
-const BarcodeTemplate1 = ({ itemName, value, rate, mrp }: any) => {
+const BarcodeTemplate1 = ({ itemName, value, rate, mrp, sizeLabel, sizeCode, age, uniqueCode, sku }: any) => {
   const barcodeRef = useRef(null);
-
   useEffect(() => {
     if (barcodeRef.current) {
       JsBarcode(barcodeRef.current, value, {
         format: 'CODE128',
         displayValue: false,
-        width: 1.5,
-        height: 7 * 3.77953,
-        margin: 2.5
+        width: 3.5,
+        height: 83,
+        margin: 0
       });
     }
   }, [value]);
+console.log(itemName);
+  const discountPercentage = mrp && rate ? Math.round(((mrp - rate) / mrp) * 100) : 0;
 
   return (
-    <Box width="52mm" height="25mm" sx={{ textAlign: 'center', fontFamily: 'Arial' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', height: '1.75rem' }}>
-        <Typography sx={{ wordWrap: "break-word", lineHeight: "1", fontSize: "0.8rem" }}><strong>{itemName.toUpperCase()}</strong></Typography>
+    <Box
+      width="400px"
+      height="600px"
+      sx={{
+        fontFamily: 'Arial',
+        paddingLeft: '15px',
+        paddingRight: '15px',
+        paddingTop: '17px',
+        paddingBottom: '5px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        position: 'relative'
+      }}
+    >
+      {/* Item Name */}
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography sx={{
+          color: '#000000',
+          fontFamily: 'Inter',
+          fontWeight: 600,
+          fontSize: '36px',
+          lineHeight: '100%',
+          letterSpacing: '0%',
+          textAlign: 'center',
+          marginBottom: '4px'
+        }}>
+          {itemName.split(' ').slice(0, 2).join(' ').toUpperCase()}
+        </Typography>
+        <Typography sx={{
+          color: '#000000',
+          fontFamily: 'Inter',
+          fontWeight: 600,
+          fontSize: '36px',
+          lineHeight: '100%',
+          letterSpacing: '0%',
+          textAlign: 'center'
+        }}>
+          {itemName.split(' ').slice(2).join(' ').toUpperCase()}
+        </Typography>
       </Box>
-      <Box sx={{ height: "7.5mm" }} >
-        <svg ref={barcodeRef} />
+
+      {/* Border below item name */}
+      <Box sx={{
+        borderTop: '4px solid #000000',
+        width: '370px',
+        height: '0px',
+        opacity: 1,
+      }} />
+
+      {/* SIZE and AGE on same line */}
+      <Box sx={{ margin: '0 15px', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+        {/* SIZE Box */}
+        <Box sx={{
+          width: '125px',
+          height: '70px',
+          border: '4px solid #000000',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative'
+        }}>
+          <Typography sx={{
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            fontSize: '14px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center'
+          }}>
+            SIZE
+          </Typography>
+          <Box sx={{
+            width: '125px',
+            height: '0px',
+            borderTop: '4px solid #000000',
+            marginTop: '4px'
+          }} />
+          <Typography sx={{
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            marginTop: '4px',
+            textAlign: 'center'
+          }}>
+            {sizeLabel?.split('·')[1]?.trim() || 'S'}
+          </Typography>
+        </Box>
+
+        {/* AGE Box */}
+        <Box sx={{
+          width: '125px',
+          height: '70px',
+          border: '4px solid #000000',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative'
+        }}>
+          <Typography sx={{
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            fontSize: '14px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center'
+          }}>
+            AGE
+          </Typography>
+          <Box sx={{
+            width: '125px',
+            height: '0px',
+            borderTop: '4px solid #000000',
+            marginTop: '4px'
+          }} />
+          <Typography sx={{
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            marginTop: '4px',
+            textAlign: 'center'
+          }}>
+            {age || '1-2 Yrs'}
+          </Typography>
+        </Box>
       </Box>
-      {
-        mrp ? (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', margin: "0.1rem 0.5rem", alignItems: "center" }}>
-            <Typography variant='subtitle2' sx={{ textDecoration: "line-through" }} fontSize="0.85rem">MRP: {mrp}</Typography>
-            <Box height="2.25rem">
-              <svg fill="#000000" version="1.1" xmlns="http://www.w3.org/2000/svg"
-                width="100%" height="100%" viewBox="0 0 467.656 467.656" xmlSpace="preserve">
-                <g>
-                  <polygon points="233.828,0 301.053,117.393 436.328,116.914 368.275,233.828 436.328,350.742 301.053,350.264 233.828,467.656 
-                166.605,350.264 31.328,350.742 99.381,233.828 31.328,116.914 166.605,117.393" />
-                  {/* Text element for displaying Discount Percentage */}
-                  <text x="50%" y="50%" textAnchor="middle" alignmentBaseline="middle" fontSize="7.5em" fill="white"
-                    fontWeight="bold">{Math.round(((mrp - rate) / mrp) * 100)}%</text>
-                </g>
-              </svg>
-            </Box>
-            <Typography variant='subtitle2' fontSize="0.85rem">Rate: {rate}</Typography>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'space-around', margin: "0.1rem 0.5rem", alignItems: "center" }}>
-            <Typography variant='subtitle2' fontSize="0.85rem">Rate: {rate}</Typography>
-          </Box>
-        )
-      }
+
+      {/* Original Price and Discount */}
+      <Box sx={{
+        width: '346px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative'
+      }}>
+        {/* Original Price Section */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Typography sx={{
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            fontSize: '18px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center'
+          }}>
+            ORIGINAL PRICE
+          </Typography>
+          <Typography sx={{
+            fontFamily: 'Inter',
+            fontWeight: 600,
+            fontSize: '36px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center',
+            textDecoration: 'line-through'
+          }}>
+            ₹{mrp}
+          </Typography>
+        </Box>
+
+        {/* Discount Badge */}
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '76px',
+          height: '76px',
+          borderRadius: '50%',
+          border: '2.5px solid #000000',
+          backgroundColor: '#000000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Typography sx={{
+            color: 'white',
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            fontSize: '32px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center',
+            verticalAlign: 'middle'
+          }}>
+            {discountPercentage}%
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Sale Price Box */}
+      <Box sx={{
+        width: '346px',
+        height: '98px',
+        border: '4px solid #000000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3px',
+        margin: '0 auto'
+      }}>
+        <Box sx={{
+          width: '335px',
+          height: '88px ',
+          backgroundColor: '#000000',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Typography sx={{
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            fontSize: '18px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center',
+            color: 'white',
+            marginBottom: '8px'
+          }}>
+            SALE PRICE
+          </Typography>
+          <Typography sx={{
+            fontFamily: 'Inter',
+            fontWeight: 700,
+            fontSize: '48px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center',
+            color: 'white'
+          }}>
+            ₹{rate}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Barcode Section Main Container */}
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {/* SKU/Product Code */}
+        <Typography sx={{
+          fontFamily: 'Inter',
+          fontWeight: 600,
+          fontSize: '20px',
+          lineHeight: '100%',
+          letterSpacing: '0%',
+          textAlign: 'center',
+          color: '#000000',
+          marginTop: '8px'
+        }}>
+          {uniqueCode || value}
+        </Typography>
+
+        {/* Barcode */}
+        <Box sx={{ 
+          textAlign: 'center',
+          width: '371px',
+          height: '84px',
+          marginTop: '2px',
+          marginBottom: '2px'
+        }}>
+          <svg 
+            ref={barcodeRef} 
+            width="100%" 
+            height="100%"
+          />
+        </Box>
+
+        {/* Code below barcode */}
+        <Typography sx={{
+          fontFamily: 'Arial',
+          fontWeight: 700,
+          fontSize: '24px',
+          lineHeight: '100%',
+          letterSpacing: '0%',
+          textAlign: 'center',
+          color: '#000000',
+        }}>
+          {sku}
+        </Typography>
+      </Box>
     </Box>
   );
 };

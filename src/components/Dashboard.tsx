@@ -83,7 +83,7 @@ export default function Dashboard(props: any) {
                 <Toolbar>
                     <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: '2rem' }}>
                         <Typography variant="h6" noWrap component="div">
-                            Dashboard
+                            shdjdfsd
                         </Typography>
                         {
                             props.isAuthenticated && (
