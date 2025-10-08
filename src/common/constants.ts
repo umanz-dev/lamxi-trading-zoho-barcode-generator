@@ -14,6 +14,8 @@ export interface BarcodeMetadata {
     rate: number
     mrp?: number
     sku?: string
+    selectedSize?: string
+    selectedAge?: string
 }
 
 export interface Barcode {

@@ -24,18 +24,18 @@ import { Barcode, BarcodeMetadata, LogConstants } from '../common/constants';
 // This makes it easy to identify when the product was created, even years later
 const generateUniqueProductCode = (): string => {
   const now = new Date();
-  
+
   // Generate 3 random uppercase letters
-  const randomChars = Array.from({ length: 3 }, () => 
+  const randomChars = Array.from({ length: 3 }, () =>
     String.fromCharCode(65 + Math.floor(Math.random() * 26))
   ).join('');
-  
+
   // Get year (last 2 digits)
   const year = now.getFullYear().toString().slice(-2);
-  
+
   // Get month (zero-padded)
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  
+
   // Format: [Random3]Y[YY]M[MM]
   return `${randomChars}Y${year}M${month}`;
 };
@@ -112,20 +112,33 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
   const [settingsTab, setSettingsTab] = React.useState<boolean>(true)
   const [barcodes, setBarcodes] = React.useState<Barcode[]>([])
   const [printLoading, setPrintLoading] = React.useState<boolean>(false)
-  const [selectedLabel, setSelectedLabel] = React.useState<string>('')
-  const [selectedAge, setSelectedAge] = React.useState<string>('')
 
   // Get all unique ages from SIZE_MAPPING
   const allAges = React.useMemo(() => {
     return Array.from(new Set(Object.values(SIZE_MAPPING).map(item => item[1])));
   }, []);
 
-  // Auto-fill age when label is selected
-  const handleLabelChange = (label: string) => {
-    setSelectedLabel(label);
-    if (label && SIZE_MAPPING[label]) {
-      setSelectedAge(SIZE_MAPPING[label][1]);
-    }
+  // Handle per-item size selection
+  const handleItemSizeChange = (itemId: string, sizeLabel: string) => {
+    const newBarcodeMetadata = barcodeMetadata.map((item: BarcodeMetadata) => {
+      if (item.id === itemId) {
+        const selectedAge = SIZE_MAPPING[sizeLabel] ? SIZE_MAPPING[sizeLabel][1] : '';
+        return { ...item, selectedSize: sizeLabel, selectedAge };
+      }
+      return item;
+    });
+    setBarcodeMetadata(newBarcodeMetadata);
+  };
+
+  // Handle per-item age selection
+  const handleItemAgeChange = (itemId: string, age: string) => {
+    const newBarcodeMetadata = barcodeMetadata.map((item: BarcodeMetadata) => {
+      if (item.id === itemId) {
+        return { ...item, selectedAge: age };
+      }
+      return item;
+    });
+    setBarcodeMetadata(newBarcodeMetadata);
   };
 
   React.useEffect(() => {
@@ -137,50 +150,50 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
           value: item.value,
           rate: item.rate,
           mrp: item.mrp,
-          sizeLabel: selectedLabel,
-          sizeCode: selectedLabel && SIZE_MAPPING[selectedLabel] ? SIZE_MAPPING[selectedLabel][0] : '',
-          age: selectedAge,
-          uniqueCode: generateUniqueProductCode() ,// Generate unique code for each barcode
+          sizeLabel: item.selectedSize || '',
+          sizeCode: item.selectedSize && SIZE_MAPPING[item.selectedSize] ? SIZE_MAPPING[item.selectedSize][0] : '',
+          age: item.selectedAge || '',
+          uniqueCode: generateUniqueProductCode(),// Generate unique code for each barcode
           sku: item.sku
         })
       }
       return temp
     }))
     setBarcodes(newBarcodes)
-  }, [barcodeMetadata, selectedLabel, selectedAge])
+  }, [barcodeMetadata])
 
   const createPDF = async () => {
     setPrintLoading(true);
-  
+
     try {
-  
+
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
         format: [75, 50]
       });
-  
+
       for (let i = 0; i < barcodes.length; i++) {
         const barcode = document.querySelector("#barcode-" + i) as HTMLElement;
         if (!barcode) continue;
-  
+
         const canvas = await html2canvas(barcode, {
           scale: 2,
           useCORS: true,
-          width:barcode.scrollWidth,
+          width: barcode.scrollWidth,
           height: barcode.scrollHeight
         });
-  
+
         const img = canvas.toDataURL("image/png");
-        const pageWidth =  pdf.internal.pageSize.getWidth();
+        const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-  
+
         // stretch to page, no crop
         pdf.addImage(img, "PNG", 0, 0, pageWidth, pageHeight);
-  
+
         if (i + 1 < barcodes.length) pdf.addPage();
       }
-  
+
       pdf.autoPrint();
       window.open(pdf.output("bloburl"), "_blank");
     } catch (e) {
@@ -189,7 +202,7 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
       setPrintLoading(false);
     }
   };
-  
+
 
   const descriptionElementRef = React.useRef<HTMLElement>(null);
   React.useEffect(() => {
@@ -208,6 +221,44 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
     })
     setBarcodeMetadata(newBarcodeMetadata)
   }
+
+  // Generate payload for per-item selections
+  const generatePayload = () => {
+    return barcodeMetadata.map((item: BarcodeMetadata) => ({
+      sku: item.sku || item.value,
+      id: item.id,
+      selectedSize: item.selectedSize || '',
+      selectedAge: item.selectedAge || '',
+      copies: item.quantity,
+      itemName: item.itemName,
+      associatedField: item.associatedField,
+      value: item.value,
+      rate: item.rate,
+      mrp: item.mrp
+    }));
+  };
+
+  // Handle Next button click - validate and proceed to preview
+  const handleNext = () => {
+    // Check if all items have size and age selected
+    const incompleteItems = barcodeMetadata.filter((item: BarcodeMetadata) =>
+      !item.selectedSize || !item.selectedAge
+    );
+
+    if (incompleteItems.length > 0) {
+      setAlert({
+        severity: 'warning',
+        message: `Please select size and age for all items before proceeding.`
+      });
+      return;
+    }
+
+    // Generate payload and log it (you can send this to your API)
+    const payload = generatePayload();
+    console.log('Barcode generation payload:', payload);
+
+    setSettingsTab(false);
+  };
 
   return (
     <Dialog
@@ -235,91 +286,97 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
               <Button startIcon={<EditRoundedIcon fontSize='small' />}>Edit</Button>
             </Box>
             <Box pt={3} pb={2}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="size-label-select-label">Select Size Label</InputLabel>
-                  <Select
-                    labelId="size-label-select-label"
-                    id="size-label-select"
-                    value={selectedLabel}
-                    label="Select Size Label"
-                    onChange={(e) => handleLabelChange(e.target.value)}
-                    MenuProps={{
-                      PaperProps: {
-                        style: {
-                          maxHeight: 300,
-                        },
-                      },
-                    }}
-                  >
-                    {Object.keys(SIZE_MAPPING).map((label) => (
-                      <MenuItem key={label} value={label}>
-                        {label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth size="small">
-                  <InputLabel id="age-select-label">Select Age</InputLabel>
-                  <Select
-                    labelId="age-select-label"
-                    id="age-select"
-                    value={selectedAge}
-                    label="Select Age"
-                    onChange={(e) => setSelectedAge(e.target.value)}
-                    MenuProps={{
-                      PaperProps: {
-                        style: {
-                          maxHeight: 300,
-                        },
-                      },
-                    }}
-                  >
-                    {allAges.map((age) => (
-                      <MenuItem key={age} value={age}>
-                        {age}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              {selectedLabel && (
-                <Box mt={2} p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                  <Typography variant="body2"><strong>Selected Label:</strong> {selectedLabel}</Typography>
-                  <Typography variant="body2"><strong>Code:</strong> {SIZE_MAPPING[selectedLabel][0]}</Typography>
-                  <Typography variant="body2"><strong>Selected Age:</strong> {selectedAge}</Typography>
-                </Box>
-              )}
+              <Typography variant="subtitle2" gutterBottom>
+                Configure size and age for each item individually below.
+              </Typography>
             </Box>
             <Box pt={2}>
               <Box sx={{ display: "flex", gap: "1rem", justifyContent: "space-between" }} pb={2}>
                 <Typography variant="overline">Item Details</Typography>
-                <Typography variant='overline'>Number of Barcode Copies</Typography>
+                <Typography variant='overline'>Size & Age</Typography>
+                <Typography variant='overline'>Copies</Typography>
               </Box>
               {barcodeMetadata
-                .map(({ id, associatedField, value, itemName, quantity }: BarcodeMetadata) => (
-                  <Box key={id} sx={{ display: "flex", gap: "1rem", justifyContent: "space-between" }}>
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Typography variant='subtitle2'><strong>{itemName}</strong></Typography>
-                      <Typography variant="subtitle2" gutterBottom>{associatedField}: {value}</Typography>
+                .map((item: BarcodeMetadata) => (
+                  <Box key={item.id} sx={{ display: "flex", gap: "1rem", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <Typography variant='subtitle2'><strong>{item.itemName}</strong></Typography>
+                      <Typography variant="subtitle2" gutterBottom>{item.associatedField}: {item.value}</Typography>
                     </Box>
-                    <TextField id="outlined-basic" sx={{ width: "25%" }} size='small' type="number" inputProps={{ min: 1, max: 99 }} onChange={(e) => { handleChangeBarcodeQuantity(id, e.target.value) }} value={quantity} variant="outlined" />
+
+                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1, minWidth: "300px" }}>
+                      <FormControl size="small" sx={{ width: "150px" }}>
+                        <InputLabel id={`size-label-${item.id}`}>Size</InputLabel>
+                        <Select
+                          labelId={`size-label-${item.id}`}
+                          value={item.selectedSize || ''}
+                          label="Size"
+                          onChange={(e) => handleItemSizeChange(item.id, e.target.value)}
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                maxHeight: 300,
+                              },
+                            },
+                          }}
+                        >
+                          {Object.keys(SIZE_MAPPING).map((label) => (
+                            <MenuItem key={label} value={label}>
+                              {label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl size="small" sx={{ width: "150px" }}>
+                        <InputLabel id={`age-${item.id}`}>Age</InputLabel>
+                        <Select
+                          labelId={`age-${item.id}`}
+                          value={item.selectedAge || ''}
+                          label="Age"
+                          onChange={(e) => handleItemAgeChange(item.id, e.target.value)}
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                maxHeight: 300,
+                              },
+                            },
+                          }}
+                        >
+                          {allAges.map((age) => (
+                            <MenuItem key={age} value={age}>
+                              {age}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
+
+                    <TextField
+                      id={`copies-${item.id}`}
+                      sx={{ width: "80px" }}
+                      size='small'
+                      type="number"
+                      inputProps={{ min: 1, max: 99 }}
+                      onChange={(e) => { handleChangeBarcodeQuantity(item.id, e.target.value) }}
+                      value={item.quantity}
+                      variant="outlined"
+                    />
                   </Box>
                 ))}
             </Box>
           </DialogContent>
         ) : (
-          <DialogContent sx={{ 
-            margin: "0 auto", 
-            width: 'auto',   
-            height: 'auto', 
+          <DialogContent sx={{
+            margin: "0 auto",
+            width: 'auto',
+            height: 'auto',
             overflowY: barcodes.length > 1 ? 'auto' : 'hidden',
             overflowX: 'hidden',
-            display: 'flex', 
+            display: 'flex',
             flexDirection: 'row',
             flexWrap: 'wrap',
-            justifyContent: 'center', 
+            justifyContent: 'center',
             alignItems: 'flex-start',
             gap: 2,
             p: 2
@@ -327,23 +384,23 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
             {
               barcodes.map((item: any, index: number) => (
                 <React.Fragment key={index}>
-                  <Box 
-                    id={"barcode-" + index} 
+                  <Box
+                    id={"barcode-" + index}
                     width="600px"
                     height="580px"
-                  // maxWidth="600px"
-                    sx={{ 
-                      transform: 'rotate(270deg)', 
+                    // maxWidth="600px"
+                    sx={{
+                      transform: 'rotate(270deg)',
                       transformOrigin: '(center, center)',
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center'
                     }}
                   >
-                    <BarcodeTemplate1 
-                      itemName={barcodes[index].itemName} 
-                      value={barcodes[index].value} 
-                      rate={barcodes[index].rate} 
+                    <BarcodeTemplate1
+                      itemName={barcodes[index].itemName}
+                      value={barcodes[index].value}
+                      rate={barcodes[index].rate}
                       mrp={barcodes[index].mrp}
                       sizeLabel={barcodes[index].sizeLabel}
                       sizeCode={barcodes[index].sizeCode}
@@ -370,7 +427,7 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
         settingsTab ? (
           <DialogActions>
             <Button onClick={() => setOpenPrintBarcodeDialog(false)}>Cancel</Button>
-            <Button variant='contained' onClick={() => setSettingsTab(false)}>Next</Button>
+            <Button variant='contained' onClick={handleNext}>Next</Button>
           </DialogActions>
         ) : (
           <DialogActions>
