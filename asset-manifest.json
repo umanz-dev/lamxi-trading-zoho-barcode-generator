@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.js": "/lamxi-trading-zoho-barcode-generator/static/js/main.e90b5629.js",
+    "main.js": "/lamxi-trading-zoho-barcode-generator/static/js/main.b90e7485.js",
     "static/js/213.a4ab5ef7.chunk.js": "/lamxi-trading-zoho-barcode-generator/static/js/213.a4ab5ef7.chunk.js",
     "static/js/553.3c762ae1.chunk.js": "/lamxi-trading-zoho-barcode-generator/static/js/553.3c762ae1.chunk.js",
     "static/js/453.bab6df91.chunk.js": "/lamxi-trading-zoho-barcode-generator/static/js/453.bab6df91.chunk.js",
     "index.html": "/lamxi-trading-zoho-barcode-generator/index.html",
-    "main.e90b5629.js.map": "/lamxi-trading-zoho-barcode-generator/static/js/main.e90b5629.js.map",
+    "main.b90e7485.js.map": "/lamxi-trading-zoho-barcode-generator/static/js/main.b90e7485.js.map",
     "213.a4ab5ef7.chunk.js.map": "/lamxi-trading-zoho-barcode-generator/static/js/213.a4ab5ef7.chunk.js.map",
     "553.3c762ae1.chunk.js.map": "/lamxi-trading-zoho-barcode-generator/static/js/553.3c762ae1.chunk.js.map",
     "453.bab6df91.chunk.js.map": "/lamxi-trading-zoho-barcode-generator/static/js/453.bab6df91.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/main.e90b5629.js"
+    "static/js/main.b90e7485.js"
   ]
 }
