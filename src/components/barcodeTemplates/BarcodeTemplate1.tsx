@@ -16,7 +16,6 @@ const BarcodeTemplate1 = ({ itemName, value, rate, mrp, sizeLabel, sizeCode, age
       });
     }
   }, [value]);
-console.log(itemName);
   const discountPercentage = mrp && rate ? Math.round(((mrp - rate) / mrp) * 100) : 0;
 
   return (

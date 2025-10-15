@@ -166,7 +166,6 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
     setPrintLoading(true);
 
     try {
-
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
@@ -174,22 +173,63 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
       });
 
       for (let i = 0; i < barcodes.length; i++) {
-        const barcode = document.querySelector("#barcode-" + i) as HTMLElement;
-        if (!barcode) continue;
+        // Find the actual BarcodeTemplate1 component inside the wrapper
+        const barcodeWrapper = document.querySelector("#barcode-" + i) as HTMLElement;
+        if (!barcodeWrapper) continue;
+        
+        // Get the BarcodeTemplate1 component (the direct child)
+        const barcodeComponent = barcodeWrapper.firstElementChild as HTMLElement;
+        if (!barcodeComponent) continue;
 
-        const canvas = await html2canvas(barcode, {
-          scale: 2,
+        const canvas = await html2canvas(barcodeComponent, {
+          scale: 3, // Higher scale for better quality
           useCORS: true,
-          width: barcode.scrollWidth,
-          height: barcode.scrollHeight
+          backgroundColor: null, // Remove background to avoid extra spacing
+          width: 400, // Fixed width of BarcodeTemplate1
+          height: 600, // Fixed height of BarcodeTemplate1
+          x: 0,
+          y: 0,
+          removeContainer: true, // Remove container margins
+          logging: false
         });
 
-        const img = canvas.toDataURL("image/png");
+        // Create rotated canvas
+        const rotatedCanvas = document.createElement('canvas');
+        const rotatedCtx = rotatedCanvas.getContext('2d');
+        
+        // Rotate the canvas 90 degrees (swap width and height)
+        rotatedCanvas.width = canvas.height;
+        rotatedCanvas.height = canvas.width;
+        
+        if (rotatedCtx) {
+          // Rotate and draw (270 degrees = 3 * 90 degrees)
+          rotatedCtx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+          rotatedCtx.rotate(270 * Math.PI / 180);
+          rotatedCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+        }
+
+        const img = rotatedCanvas.toDataURL("image/png");
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
-        // stretch to page, no crop
-        pdf.addImage(img, "PNG", 0, 0, pageWidth, pageHeight);
+        // Calculate dimensions to fit the page properly
+        // BarcodeTemplate1 is 400x600px, convert to mm (assuming 96 DPI)
+        const templateWidthMm = 400 * 0.264583; // Convert px to mm
+        const templateHeightMm = 600 * 0.264583; // Convert px to mm
+        
+        // Scale to fit page while maintaining aspect ratio
+        const scaleX = pageWidth / templateWidthMm;
+        const scaleY = pageHeight / templateHeightMm;
+        const scale = Math.min(scaleX, scaleY);
+        
+        const finalWidth = templateWidthMm * scale;
+        const finalHeight = templateHeightMm * scale;
+        
+        // Position to fill the entire page without margins
+        const xOffset = 0;
+        const yOffset = 0;
+        
+        pdf.addImage(img, "PNG", xOffset, yOffset, pageWidth, pageHeight);
 
         if (i + 1 < barcodes.length) pdf.addPage();
       }
@@ -386,15 +426,15 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
                 <React.Fragment key={index}>
                   <Box
                     id={"barcode-" + index}
-                    width="600px"
-                    height="580px"
-                    // maxWidth="600px"
                     sx={{
-                      transform: 'rotate(270deg)',
-                      transformOrigin: '(center, center)',
                       display: 'flex',
                       justifyContent: 'center',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '4px',
+                      padding: '10px',
+                      margin: '5px'
                     }}
                   >
                     <BarcodeTemplate1
