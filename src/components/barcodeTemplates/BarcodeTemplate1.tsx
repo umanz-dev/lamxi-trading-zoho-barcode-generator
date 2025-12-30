@@ -238,8 +238,8 @@ const BarcodeTemplate1 = ({ itemName, value, rate, mrp, sizeLabel, sizeCode, age
         }}>
           <Typography sx={{
             fontFamily: 'Inter',
-            fontWeight: 700,
-            fontSize: '18px',
+            fontWeight: 800,
+            fontSize: '24px',
             lineHeight: '100%',
             letterSpacing: '0%',
             textAlign: 'center',
