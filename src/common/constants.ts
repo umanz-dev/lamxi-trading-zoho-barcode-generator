@@ -43,7 +43,7 @@ export const APIConstants = {
 
 export const envConstants = {
     CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
-    ORGANIZATION_ID: process.env.REACT_APP_6ORGANIZATION_ID
+    ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID
 }
 
 export const LogConstants = {
