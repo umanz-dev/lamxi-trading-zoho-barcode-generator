@@ -18,26 +18,24 @@ import InputLabel from '@mui/material/InputLabel';
 import BarcodeTemplate1 from './barcodeTemplates/BarcodeTemplate1';
 import { Barcode, BarcodeMetadata, LogConstants } from '../common/constants';
 
-// Generate unique product code based on current date
+// Generate unique product code based on selected year and month
 // Format: [3 random chars][Y][YY][M][MM]
 // Example: PTUY25M09 (Generated in September 2025)
 // This makes it easy to identify when the product was created, even years later
-const generateUniqueProductCode = (): string => {
-  const now = new Date();
-
+const generateUniqueProductCode = (year: number, month: number): string => {
   // Generate 3 random uppercase letters
   const randomChars = Array.from({ length: 3 }, () =>
     String.fromCharCode(65 + Math.floor(Math.random() * 26))
   ).join('');
 
   // Get year (last 2 digits)
-  const year = now.getFullYear().toString().slice(-2);
+  const yearStr = year.toString().slice(-2);
 
   // Get month (zero-padded)
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const monthStr = month.toString().padStart(2, '0');
 
   // Format: [Random3]Y[YY]M[MM]
-  return `${randomChars}Y${year}M${month}`;
+  return `${randomChars}Y${yearStr}M${monthStr}`;
 };
 
 // Size mapping constant: [code, age/description]
@@ -112,6 +110,42 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
   const [settingsTab, setSettingsTab] = React.useState<boolean>(true)
   const [barcodes, setBarcodes] = React.useState<Barcode[]>([])
   const [printLoading, setPrintLoading] = React.useState<boolean>(false)
+  
+  // Initialize year and month with current date for new items
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  
+  // Generate years list (current year ± 10 years)
+  const years = React.useMemo(() => {
+    return Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  }, []);
+  
+  // Generate months list (1-12)
+  const months = React.useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => i + 1);
+  }, []);
+  
+  // Initialize year and month for items that don't have them
+  React.useEffect(() => {
+    const needsUpdate = barcodeMetadata.some((item: BarcodeMetadata) => 
+      !item.selectedYear || !item.selectedMonth
+    );
+    
+    if (needsUpdate) {
+      const updatedMetadata = barcodeMetadata.map((item: BarcodeMetadata) => {
+        if (!item.selectedYear || !item.selectedMonth) {
+          return {
+            ...item,
+            selectedYear: item.selectedYear || currentYear,
+            selectedMonth: item.selectedMonth || currentMonth
+          };
+        }
+        return item;
+      });
+      setBarcodeMetadata(updatedMetadata);
+    }
+  }, [barcodeMetadata.length]);
 
   // Get all unique ages from SIZE_MAPPING
   const allAges = React.useMemo(() => {
@@ -141,9 +175,33 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
     setBarcodeMetadata(newBarcodeMetadata);
   };
 
+  // Handle per-item year selection
+  const handleItemYearChange = (itemId: string, year: number) => {
+    const newBarcodeMetadata = barcodeMetadata.map((item: BarcodeMetadata) => {
+      if (item.id === itemId) {
+        return { ...item, selectedYear: year };
+      }
+      return item;
+    });
+    setBarcodeMetadata(newBarcodeMetadata);
+  };
+
+  // Handle per-item month selection
+  const handleItemMonthChange = (itemId: string, month: number) => {
+    const newBarcodeMetadata = barcodeMetadata.map((item: BarcodeMetadata) => {
+      if (item.id === itemId) {
+        return { ...item, selectedMonth: month };
+      }
+      return item;
+    });
+    setBarcodeMetadata(newBarcodeMetadata);
+  };
+
   React.useEffect(() => {
     const newBarcodes = [].concat(...barcodeMetadata.map((item: BarcodeMetadata) => {
       const temp = []
+      const itemYear = item.selectedYear || currentYear;
+      const itemMonth = item.selectedMonth || currentMonth;
       for (let i = 0; i < item.quantity; i++) {
         temp.push({
           itemName: item.itemName,
@@ -153,7 +211,7 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
           sizeLabel: item.selectedSize || '',
           sizeCode: item.selectedSize && SIZE_MAPPING[item.selectedSize] ? SIZE_MAPPING[item.selectedSize][0] : '',
           age: item.selectedAge || '',
-          uniqueCode: generateUniqueProductCode(),// Generate unique code for each barcode
+          uniqueCode: generateUniqueProductCode(itemYear, itemMonth),// Generate unique code for each barcode
           sku: item.sku
         })
       }
@@ -327,12 +385,13 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
             </Box>
             <Box pt={3} pb={2}>
               <Typography variant="subtitle2" gutterBottom>
-                Configure size and age for each item individually below.
+                Configure size, age, and product code settings for each item individually below.
               </Typography>
             </Box>
             <Box pt={2}>
               <Box sx={{ display: "flex", gap: "1rem", justifyContent: "space-between" }} pb={2}>
                 <Typography variant="overline">Item Details</Typography>
+                <Typography variant='overline'>Year & Month</Typography>
                 <Typography variant='overline'>Size & Age</Typography>
                 <Typography variant='overline'>Copies</Typography>
               </Box>
@@ -342,6 +401,86 @@ export default function PrintBarcodeDialog({ openPrintBarcodeDialog, setOpenPrin
                     <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
                       <Typography variant='subtitle2'><strong>{item.itemName}</strong></Typography>
                       <Typography variant="subtitle2" gutterBottom>{item.associatedField}: {item.value}</Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1, minWidth: "200px" }}>
+                      <FormControl size="small" sx={{ width: "100px" }}>
+                        <InputLabel id={`year-${item.id}`}>Year</InputLabel>
+                        <Select
+                          labelId={`year-${item.id}`}
+                          value={item.selectedYear || currentYear}
+                          label="Year"
+                          onChange={(e) => handleItemYearChange(item.id, Number(e.target.value))}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                maxHeight: 300,
+                                '&::-webkit-scrollbar': {
+                                  width: '6px',
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                  background: '#f1f1f1',
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                  background: '#d0d0d0',
+                                  borderRadius: '3px',
+                                },
+                                '&::-webkit-scrollbar-thumb:hover': {
+                                  background: '#b0b0b0',
+                                },
+                                // Firefox
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: '#d0d0d0 #f1f1f1',
+                              },
+                            },
+                          }}
+                        >
+                          {years.map((year) => (
+                            <MenuItem key={year} value={year}>
+                              {year}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl size="small" sx={{ width: "100px" }}>
+                        <InputLabel id={`month-${item.id}`}>Month</InputLabel>
+                        <Select
+                          labelId={`month-${item.id}`}
+                          value={item.selectedMonth || currentMonth}
+                          label="Month"
+                          onChange={(e) => handleItemMonthChange(item.id, Number(e.target.value))}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                maxHeight: 300,
+                                '&::-webkit-scrollbar': {
+                                  width: '6px',
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                  background: '#f1f1f1',
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                  background: '#d0d0d0',
+                                  borderRadius: '3px',
+                                },
+                                '&::-webkit-scrollbar-thumb:hover': {
+                                  background: '#b0b0b0',
+                                },
+                                // Firefox
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: '#d0d0d0 #f1f1f1',
+                              },
+                            },
+                          }}
+                        >
+                          {months.map((month) => (
+                            <MenuItem key={month} value={month}>
+                              {new Date(2000, month - 1, 1).toLocaleString('default', { month: 'short' })}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Box>
 
                     <Box sx={{ display: "flex", flexDirection: "row", gap: 1, minWidth: "300px" }}>

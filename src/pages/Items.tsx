@@ -26,6 +26,9 @@ const Items = ({ setAlert, searchText }: any) => {
 
 
     React.useEffect(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
         const newBarcodeMetadata = selection.map((selectedId: any) => items.find((item: any) => item.item_id === selectedId))
             .map(({ item_id, name, sku, rate, cf_mrp }: any) => {
                 return {
@@ -36,7 +39,9 @@ const Items = ({ setAlert, searchText }: any) => {
                     quantity: 1,
                     rate: rate,
                     mrp: cf_mrp ? Number(cf_mrp) : undefined,
-                    sku: sku
+                    sku: sku,
+                    selectedYear: currentYear,
+                    selectedMonth: currentMonth
                 }
             })
         setBarcodeMetadata(newBarcodeMetadata)
